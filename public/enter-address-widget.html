@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- <link rel="icon" href="%PUBLIC_URL%/favicon.ico" /> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Web site created using create-react-app" />
+    <!-- <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" /> -->
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <!-- <link rel="manifest" href="%PUBLIC_URL%/manifest.json" /> -->
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>HouseHack</title>
+    <style>
+      #root {
+        width: 100vw; 
+        height: 100vh; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center
+      }
+      #container {
+        background-color: rgba(233, 251, 255);
+        /* width: 75vw; 
+        height: 50vh;  */
+        margin: 2em;
+        border-radius: 10px;
+        border: solid 1px rgba(206, 226, 239);
+        padding: 2em;
+        line-height: 1.5;
+        color: rgba(83,104,137);
+        font-family: helvetica;
+      }
+
+
+
+    </style>
+    <style>
+      #enter_address_root {
+  
+      }
+
+
+      #address_input_with_button {
+        display: flex;
+      }
+
+      #address_input {
+        width: 360px;
+        height: 60px;
+        padding: 10px 30px;
+        border-radius: 100px;
+        border: solid 1px rgba(206, 226, 239);
+        outline: none;
+        font-size: 16px;
+        box-sizing: border-box;
+      }
+
+      #address_submit_button {
+        text-decoration: none;
+        color: white;
+        background-color: rgba(255, 75, 88);
+        padding: 18px 30px;
+        border-radius: 100px;
+        /* border: solid 1px rgba(206, 226, 239); */
+        outline: none;
+        font-size: 16px;
+        white-space: nowrap;
+        text-align: center;
+        box-sizing: border-box;
+        display: block; 
+        margin-left: 10px;
+      }
+      @media screen and (max-width: 767px) {
+        #address_input_with_button {
+          flex-direction: column;
+        }
+        #address_input {
+          width: 100%;
+        }
+        #address_submit_button {
+          width: 100%;
+          margin: 10px 0;
+        }
+      }
+
+      #address_input_error {
+        margin: 5px 5px;
+        font-size: 12px;
+        color: rgba(235, 95, 67);
+        visibility: hidden;
+      }
+
+      #address_submit_loader {
+        display: none;
+      }
+      
+
+      .button_with_loader {
+        position: relative;
+      }
+
+      .loader {
+        border: 4px solid #3498db;  
+        border-top: 4px solid rgba(0,0,0,0); 
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 0.7s linear infinite;
+        position: absolute;
+        left: calc(50% - 14px);
+        top: calc(50% - 14px);
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+    <script defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCoE1kvjPg2rblgGoFlO2L0WhOVAtTaP0o&libraries=places&callback=onPlacesAPIInit">
+    </script>
+    <script>
+
+      function onPlacesAPIInit() {
+        let input = document.getElementById('address_input');
+        let autoCompleteOptions = { 
+          types: ['address'], 
+          componentRestrictions: { country: 'us' } 
+        }
+
+        input.addEventListener("change", undisplayNoResultsFound);
+        input.addEventListener("keypress", undisplayNoResultsFound);
+
+        let autocompleteInput = new google.maps.places.Autocomplete(input, autoCompleteOptions);
+        google.maps.event.addListener(autocompleteInput, 'place_changed', function() {
+            // let place = autocompleteInput.getPlace();
+            // if (!place.geometry) {
+            //     console.log('no location');
+            //     return;
+            // }
+            // console.log(place);
+            submitPlace()
+        });
+
+        async function submitPlace() {
+          setToLoadingState(true)
+          let place = autocompleteInput.getPlace();
+          if(place && place.geometry) {
+            await didSubmitPlace(place)
+          } else if(input.value) {
+            let autocompleteService = new google.maps.places.AutocompleteService();
+            const predictedPlace = autocompleteService.getPlacePredictions({ input: input.value, ...autoCompleteOptions }, async (predictions, status) => {
+              console.log(predictions)
+
+              if(predictions && predictions.length > 0) {
+                const placesService = new google.maps.places.PlacesService(document.getElementById('places_service_attribution'));
+                placesService.getDetails({ placeId: predictions[0].place_id }, async (placeDetails, status) => {
+                  if(placeDetails) {
+                    await didSubmitPlace(placeDetails)
+                  } else {
+                    displayNoResultsFound()
+                  }
+                })
+              } else {
+                displayNoResultsFound()
+              }
+            })
+          } else {
+            setToLoadingState(false)
+          }
+        } 
+
+        document.getElementById('address_submit_button').addEventListener('click', async () => {
+          const isDisabled = document.getElementById('address_submit_button').disabled
+          if(isDisabled) {
+            return;
+          }
+          submitPlace()
+        })
+      }
+
+      async function didSubmitPlace(place) {
+        console.log('DID SUBMIT:');
+        console.log(place);
+
+        setToLoadingState(true)
+        const leadResult = await createLead(place)
+        window.location.href = `/seller-lead/${leadResult.data}`
+      }
+
+      async function createLead(place) {
+        const househackCreateLead = firebase.functions().httpsCallable('househackCreateLead');
+        const leadResult = await househackCreateLead(place)
+        console.log("leadResult: ")
+        console.log(leadResult)
+        return leadResult
+      }
+
+      function displayNoResultsFound() { 
+        setToLoadingState(false)
+        document.getElementById('address_input_error').style = 'visibility: visible'
+      }
+
+      function undisplayNoResultsFound() { 
+        document.getElementById('address_input_error').style = 'visibility: hidden'
+      }
+
+      function setToLoadingState(isLoading) {
+        document.getElementById('address_input').disabled = isLoading
+        const button = document.getElementById('address_submit_button')
+        button.disabled = isLoading
+        button.style = isLoading ? 'opacity: 0.25; cursor: default;' : ''
+        document.getElementById('address_submit_loader').style = isLoading ? 'display: inline-block' : ''
+      }
+      
+    </script>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id='root'>
+      <div id='container'>
+        <p>
+          Below is the "enter-address widget" which we will place on the squarespace site. 
+          We can re-style it however we want. 
+          It provides address suggestions as they type. 
+          After they click the button it makes a call to our back-end to create a new lead in our database then redirects them to the multistep form. 
+          The lead in our database is the record that stores everything they've entered so far on the form.
+        </p>
+        <br/>
+        <div id="enter_address_root">
+          <div id='address_input_with_button'>
+            <input id='address_input' placeholder='Enter Address...' />
+            <div class='button_with_loader'>
+              <div class="loader" id='address_submit_loader'></div>
+              <a href='#' id='address_submit_button'>GET THE BEST OFFER</a>
+            </div>
+          </div>
+          <div id='address_input_error'>We couldn't find that address. Try without zip codes or unit numbers.</div>
+        </div>
+      </div>
+      <div id='places_service_attribution'></div>
+    </div> 
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+
+    <!-- The core Firebase JS SDK is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/7.23.0/firebase-app.js"></script>
+
+    <!-- TODO: Add SDKs for Firebase products that you want to use
+        https://firebase.google.com/docs/web/setup#available-libraries -->
+    <script src="https://www.gstatic.com/firebasejs/7.23.0/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.23.0/firebase-functions.js"></script>
+
+    <script>
+      // Your web app's Firebase configuration
+      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+      const firebaseConfig = {
+        apiKey: "AIzaSyCoE1kvjPg2rblgGoFlO2L0WhOVAtTaP0o",
+        authDomain: "wedgefinder.firebaseapp.com",
+        databaseURL: "https://wedgefinder.firebaseio.com",
+        projectId: "wedgefinder",
+        storageBucket: "wedgefinder.appspot.com",
+        messagingSenderId: "772292712582",
+        appId: "1:772292712582:web:4187e0758c21e04393d907",
+        measurementId: "G-5W0ST9G70Q"
+      };
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      firebase.analytics();
+    </script>
+  </body>
+</html>

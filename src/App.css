@@ -1,0 +1,16 @@
+@media screen and (max-width: 1200px) {
+  .vertical-layout-hidden {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .mobile-hidden {
+    display: none;
+  }
+}
+
+:focus {
+  outline: none;
+  box-shadow: 0 0 5px #38a8ff;
+}
