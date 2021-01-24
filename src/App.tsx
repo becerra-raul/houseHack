@@ -10,8 +10,11 @@ import { househackMarketingSiteURL } from "./common/Constants";
 export default function App() {
   useEffect(() => {
     if (window.location.pathname === "/") {
-      // window.location.href = "/enter-address-widget.html";
-      window.location.href = househackMarketingSiteURL;
+      if (window.location.hostname.includes("househack.com")) {
+        window.location.href = househackMarketingSiteURL;
+      } else {
+        window.location.href = "/enter-address-widget.html";
+      }
     }
   }, []);
 
