@@ -6,6 +6,12 @@
 - For each ticket, submit one or more PRs against main (follow https://guides.github.com/introduction/flow/)
 
 
+## Setup
+- Clone repo
+- yarn install
+- yarn start
+
+
 ## Available Scripts
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
