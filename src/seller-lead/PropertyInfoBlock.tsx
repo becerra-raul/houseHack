@@ -32,7 +32,7 @@ export function PropertyInfoBlock(props: MyProps) {
     alert("TODO: Have a modal pop up");
   };
 
-  const addressParts = props.propertyAddress.split(", ");
+  const addressParts = props.propertyAddress?.split(", ") || ["", "", ""];
   const firstLine = addressParts[0];
   const secondLine = addressParts[1] + ", " + addressParts[2];
 

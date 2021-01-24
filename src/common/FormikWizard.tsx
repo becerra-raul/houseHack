@@ -4,11 +4,14 @@ import { FormikDebug } from "./FormikDebug";
 import { BigButton } from "./BigButton";
 import styled from "styled-components";
 import { maxMobileWidth } from "../style/sizes";
-import { Container } from "@material-ui/core";
+import { Backdrop, CircularProgress, Container, Snackbar } from "@material-ui/core";
 import { useHistory, useParams } from "react-router-dom";
 import { StyledDoubleButtonContainer } from "../seller-lead/CommonStyledFormElements";
 import { SellerLeadPageBottomBar } from "../seller-lead/SellerLeadPageBottomBar";
 import { useFunctions } from "reactfire";
+import { useModalControls } from "./ModalUtils";
+import { vibrantBlue } from "../style/colors";
+import { Alert } from "@material-ui/lab";
 
 interface MyProps {
   children: any;
@@ -41,6 +44,8 @@ export const FormikWizard = (props: MyProps) => {
   const { children, initialValues, onSubmit, stepNames } = props;
   const onEachStepSubmit = props.onEachStepSubmit || (() => {});
   const onStepChange = props.onStepChange || (() => {});
+  const [spinnerModalIsOpen, spinnerModalOpen, spinnerModalClose] = useModalControls();
+  const [snackbarIsOpen, snackbarOpen, snackbarClose] = useModalControls();
 
   const params: any = useParams();
   const formStepSlug: any = params.step;
@@ -83,7 +88,7 @@ export const FormikWizard = (props: MyProps) => {
     const leadId = params.id;
     const househackDidFinishForm = functions.httpsCallable("househackDidFinishForm");
     const finishFormResult = await househackDidFinishForm({ leadId });
-    console.log(`finishFormResult: ${finishFormResult}`);
+    // console.log(`finishFormResult:`, finishFormResult);
     return finishFormResult;
   }
 
@@ -93,15 +98,18 @@ export const FormikWizard = (props: MyProps) => {
     }
     await onEachStepSubmit(values, bag);
 
-    bag.setTouched({});
-    next(values);
+    try {
+      if (isLastStep) {
+        spinnerModalOpen();
+        await submitLastStep();
+      }
 
-    //TODO: If it's actually the last step then have some loading and verification that it actually submitted successfully
-
-    if (isLastStep) {
-      // return onSubmit(values, bag);
-      submitLastStep();
+      bag.setTouched({});
+      next(values);
+    } catch (error) {
+      snackbarOpen();
     }
+    spinnerModalClose();
   };
 
   const progress = stepNumber / totalSteps;
@@ -124,6 +132,15 @@ export const FormikWizard = (props: MyProps) => {
               isConfirmationScreen={isConfirmationScreen}
               onClickBack={previous}
             />
+
+            <Backdrop open={spinnerModalIsOpen} style={{ zIndex: 999, color: vibrantBlue }}>
+              <CircularProgress color="inherit" />
+            </Backdrop>
+            <Snackbar open={snackbarIsOpen} autoHideDuration={6000} onClose={snackbarClose}>
+              <Alert onClose={snackbarClose} severity="error">
+                Error submitting form. Please try again.
+              </Alert>
+            </Snackbar>
           </StyledForm>
         );
       }}
