@@ -3,6 +3,7 @@
 ## Guidelines
 - Please use https://prettier.io/ for automatic code formatting
 - See https://github.com/kdsketch/househack/projects/1 for work to be done. Tickets at the top are higher priority. Each ticket is linked to an issue where you can ask any clarifying questions.
+- For each ticket, submit one or more PRs against main (follow https://guides.github.com/introduction/flow/)
 
 
 ## Available Scripts
