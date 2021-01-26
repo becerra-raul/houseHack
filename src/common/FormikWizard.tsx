@@ -86,8 +86,9 @@ export const FormikWizard = (props: MyProps) => {
   const functions = useFunctions();
   async function submitLastStep() {
     const leadId = params.id;
+    const hostname = window.location.hostname;
     const househackDidFinishForm = functions.httpsCallable("househackDidFinishForm");
-    const finishFormResult = await househackDidFinishForm({ leadId });
+    const finishFormResult = await househackDidFinishForm({ leadId, hostname });
     return finishFormResult;
   }
 
